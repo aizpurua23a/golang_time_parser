@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"strconv"
 )
 
 func openFile(filename string) (file *os.File) {
@@ -24,6 +25,27 @@ func closeFile(fp *os.File) {
 
 var timeRegExp = regexp.MustCompile(`(?P<hours>\d\d?)(:(?P<minutes>\d\d))?(?P<meridiem>am|pm)?`)
 
+func getMinutesOfDay(hour int, minutes int, meridiem string) (DayMins int) {
+	if meridiem == "am" && hour == 12 {
+		DayMins = minutes
+		return
+	}
+
+	if meridiem == "pm" && hour == 12 {
+		DayMins = hour*60 + minutes
+		return
+	}
+
+	if meridiem == "pm" {
+		hour = hour + 12
+	}
+
+	DayMins = hour*60 + minutes
+
+	return
+
+}
+
 func main() {
 
 	file := openFile("test_input.txt")
@@ -37,7 +59,27 @@ func main() {
 				result[name] = match[i]
 			}
 		}
-		fmt.Printf("hours: %s\nminutes: %s\nmeridiem: %s\n", result["hours"], result["minutes"], result["meridiem"])
+
+		hour, err1 := strconv.Atoi(result["hours"])
+
+		if err1 != nil {
+			return
+		}
+
+		min := 0
+		var err2 error
+
+		if result["minutes"] != "" {
+			min, err2 = strconv.Atoi(result["minutes"])
+			if err2 != nil {
+				return
+			}
+		}
+
+		DayMins := getMinutesOfDay(hour, min, result["meridiem"])
+
+		fmt.Println("Time: ", line)
+		fmt.Println("Minutes past midnight: ", strconv.Itoa(DayMins))
 
 	}
 
